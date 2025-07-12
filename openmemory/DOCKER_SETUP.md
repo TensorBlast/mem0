@@ -189,10 +189,11 @@ docker logs -f mem0_ui
 The setup script now builds images locally to include Mistral support:
 
 ### Backend Build Process:
-1. **Builds mem0 package** with Mistral LLM and embedder implementations
-2. **Installs dependencies** including system packages for compilation
-3. **Includes auto-configuration** script for provider detection
-4. **Sets up environment** for both OpenAI and Mistral API keys
+1. **Uses correct build context** from mem0 project root for access to all files
+2. **Builds mem0 package** with Mistral LLM and embedder implementations
+3. **Installs dependencies** including system packages for compilation
+4. **Includes auto-configuration** script for provider detection
+5. **Sets up environment** for both OpenAI and Mistral API keys
 
 ### Frontend Build Process:
 1. **Builds UI locally** with Mistral provider options

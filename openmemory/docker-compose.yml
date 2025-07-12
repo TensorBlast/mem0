@@ -6,7 +6,9 @@ services:
     volumes:
       - mem0_storage:/mem0/storage
   openmemory-mcp:
-    image: mem0/openmemory-mcp:latest
+    build: 
+      context: ..
+      dockerfile: openmemory/api/Dockerfile
     environment:
       - OPENAI_API_KEY=
       - MISTRAL_API_KEY=IbbWhBGpLxlDoSrZ1caQqKQG6YGaBUSN

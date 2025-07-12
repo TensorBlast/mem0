@@ -18,13 +18,13 @@ RUN pip install -e ".[llms]"
 
 # Create openmemory directory and copy API code
 WORKDIR /usr/src/openmemory
-COPY api/requirements.txt .
+COPY openmemory/api/requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY api/config.json .
-COPY api/auto_configure.py .
-COPY api/entrypoint.sh .
-COPY api/ .
+COPY openmemory/api/config.json .
+COPY openmemory/api/auto_configure.py .
+COPY openmemory/api/entrypoint.sh .
+COPY openmemory/api/ .
 
 # Make entrypoint script executable
 RUN chmod +x entrypoint.sh

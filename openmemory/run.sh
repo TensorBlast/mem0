@@ -89,8 +89,8 @@ services:
       - mem0_storage:/mem0/storage
   openmemory-mcp:
     build: 
-      context: .
-      dockerfile: api/Dockerfile
+      context: ..
+      dockerfile: openmemory/api/Dockerfile
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
@@ -114,7 +114,7 @@ docker compose up -d --build
 
 # Build and start the frontend
 echo "🚀 Building and starting frontend on port $FRONTEND_PORT..."
-docker build -t openmemory-ui:local -f ui/Dockerfile ui/
+docker build -t openmemory-ui:local -f openmemory/ui/Dockerfile openmemory/ui/
 docker run -d \
   --name mem0_ui \
   -p ${FRONTEND_PORT}:3000 \
