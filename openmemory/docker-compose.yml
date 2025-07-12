@@ -11,7 +11,7 @@ services:
       dockerfile: openmemory/api/Dockerfile
     environment:
       - OPENAI_API_KEY=
-      - MISTRAL_API_KEY=IbbWhBGpLxlDoSrZ1caQqKQG6YGaBUSN
+      - MISTRAL_API_KEY=
       - USER=moot
       - QDRANT_HOST=mem0_store
       - QDRANT_PORT=6333

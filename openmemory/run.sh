@@ -114,7 +114,7 @@ docker compose up -d --build
 
 # Build and start the frontend
 echo "🚀 Building and starting frontend on port $FRONTEND_PORT..."
-docker build -t openmemory-ui:local -f openmemory/ui/Dockerfile openmemory/ui/
+docker build -t openmemory-ui:local -f ui/Dockerfile ui/
 docker run -d \
   --name mem0_ui \
   -p ${FRONTEND_PORT}:3000 \
