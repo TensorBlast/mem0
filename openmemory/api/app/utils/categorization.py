@@ -8,7 +8,15 @@ from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 load_dotenv()
-openai_client = OpenAI()
+openai_client = None
+
+
+def get_openai_client():
+    """Get OpenAI client with lazy initialization."""
+    global openai_client
+    if openai_client is None:
+        openai_client = OpenAI()
+    return openai_client
 
 
 class MemoryCategories(BaseModel):
@@ -24,7 +32,8 @@ def get_categories_for_memory(memory: str) -> List[str]:
         ]
 
         # Let OpenAI handle the pydantic parsing directly
-        completion = openai_client.beta.chat.completions.parse(
+        client = get_openai_client()
+        completion = client.beta.chat.completions.parse(
             model="gpt-4o-mini",
             messages=messages,
             response_format=MemoryCategories,

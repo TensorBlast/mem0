@@ -6,13 +6,32 @@ echo "🚀 Starting OpenMemory installation..."
 
 # Set environment variables
 OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+MISTRAL_API_KEY="${MISTRAL_API_KEY:-}"
 USER="${USER:-$(whoami)}"
 NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-http://localhost:8765}"
 
-if [ -z "$OPENAI_API_KEY" ]; then
-  echo "❌ OPENAI_API_KEY not set. Please run with: curl -sL https://raw.githubusercontent.com/mem0ai/mem0/main/openmemory/run.sh | OPENAI_API_KEY=your_api_key bash"
-  echo "❌ OPENAI_API_KEY not set. You can also set it as global environment variable: export OPENAI_API_KEY=your_api_key"
+# Check if at least one API key is provided
+if [ -z "$OPENAI_API_KEY" ] && [ -z "$MISTRAL_API_KEY" ]; then
+  echo "❌ No API key provided. Please set either OPENAI_API_KEY or MISTRAL_API_KEY."
+  echo "For OpenAI: curl -sL https://raw.githubusercontent.com/mem0ai/mem0/main/openmemory/run.sh | OPENAI_API_KEY=your_api_key bash"
+  echo "For Mistral: curl -sL https://raw.githubusercontent.com/mem0ai/mem0/main/openmemory/run.sh | MISTRAL_API_KEY=your_api_key bash"
+  echo "You can also set them as global environment variables:"
+  echo "  export OPENAI_API_KEY=your_api_key"
+  echo "  export MISTRAL_API_KEY=your_api_key"
   exit 1
+fi
+
+# Determine which provider to use
+if [ -n "$MISTRAL_API_KEY" ]; then
+  echo "🔧 Using Mistral as the LLM and embedder provider"
+  PROVIDER="mistral"
+  API_KEY_VAR="MISTRAL_API_KEY"
+  API_KEY_VALUE="$MISTRAL_API_KEY"
+elif [ -n "$OPENAI_API_KEY" ]; then
+  echo "🔧 Using OpenAI as the LLM and embedder provider"
+  PROVIDER="openai"
+  API_KEY_VAR="OPENAI_API_KEY"
+  API_KEY_VALUE="$OPENAI_API_KEY"
 fi
 
 # Check if Docker is installed
@@ -49,10 +68,14 @@ fi
 
 # Export required variables for Compose and frontend
 export OPENAI_API_KEY
+export MISTRAL_API_KEY
 export USER
 export NEXT_PUBLIC_API_URL
 export NEXT_PUBLIC_USER_ID="$USER"
 export FRONTEND_PORT
+export PROVIDER
+export API_KEY_VAR
+export API_KEY_VALUE
 
 # Create docker-compose.yml file
 echo "📝 Creating docker-compose.yml..."
@@ -65,12 +88,17 @@ services:
     volumes:
       - mem0_storage:/mem0/storage
   openmemory-mcp:
-    image: mem0/openmemory-mcp:latest
+    build: 
+      context: .
+      dockerfile: api/Dockerfile
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - USER=${USER}
       - QDRANT_HOST=mem0_store
       - QDRANT_PORT=6333
+      - PROVIDER=${PROVIDER}
+      - AUTO_CONFIGURE=true
     depends_on:
       - mem0_store
     ports:
@@ -80,21 +108,35 @@ volumes:
   mem0_storage:
 EOF
 
-# Start services
-echo "🚀 Starting backend services..."
-docker compose up -d
+# Build and start services
+echo "🚀 Building and starting backend services with Mistral support..."
+docker compose up -d --build
 
-# Start the frontend
-echo "🚀 Starting frontend on port $FRONTEND_PORT..."
+# Build and start the frontend
+echo "🚀 Building and starting frontend on port $FRONTEND_PORT..."
+docker build -t openmemory-ui:local -f ui/Dockerfile ui/
 docker run -d \
   --name mem0_ui \
   -p ${FRONTEND_PORT}:3000 \
   -e NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
   -e NEXT_PUBLIC_USER_ID="$USER" \
-  mem0/openmemory-ui:latest
+  openmemory-ui:local
 
 echo "✅ Backend:  http://localhost:8765"
 echo "✅ Frontend: http://localhost:$FRONTEND_PORT"
+echo "🔧 Provider: $PROVIDER"
+echo "🔑 API Key:  $API_KEY_VAR (configured)"
+echo "🏗️  Built locally with Mistral support"
+
+if [ "$PROVIDER" = "mistral" ]; then
+    echo "📝 Note: Using Mistral AI with models:"
+    echo "   - LLM: mistral-small-latest"
+    echo "   - Embedder: mistral-embed"
+elif [ "$PROVIDER" = "openai" ]; then
+    echo "📝 Note: Using OpenAI with models:"
+    echo "   - LLM: gpt-4o-mini"
+    echo "   - Embedder: text-embedding-3-small"
+fi
 
 # Open the frontend URL in the default web browser
 echo "🌐 Opening frontend in the default browser..."

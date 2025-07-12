@@ -102,7 +102,7 @@ export function FormView({ settings, onChange }: FormViewProps) {
     "Together": "together",
     "Groq": "groq",
     "Litellm": "litellm",
-    "Mistral AI": "mistralai",
+    "Mistral": "mistral",
     "Google AI": "google_ai",
     "AWS Bedrock": "aws_bedrock",
     "Gemini": "gemini",
@@ -123,6 +123,7 @@ export function FormView({ settings, onChange }: FormViewProps) {
     "Together": "together",
     "LangChain": "langchain",
     "AWS Bedrock": "aws_bedrock",
+    "Mistral": "mistral",
   }
 
   return (

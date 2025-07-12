@@ -1,0 +1,20 @@
+{
+    "mem0": {
+        "llm": {
+            "provider": "mistral",
+            "config": {
+                "model": "mistral-small-latest",
+                "temperature": 0.1,
+                "max_tokens": 2000,
+                "api_key": "env:MISTRAL_API_KEY"
+            }
+        },
+        "embedder": {
+            "provider": "mistral",
+            "config": {
+                "model": "mistral-embed",
+                "api_key": "env:MISTRAL_API_KEY"
+            }
+        }
+    }
+} 

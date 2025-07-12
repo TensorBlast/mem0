@@ -31,6 +31,7 @@ class LlmFactory:
         "lmstudio": "mem0.llms.lmstudio.LMStudioLLM",
         "vllm": "mem0.llms.vllm.VllmLLM",
         "langchain": "mem0.llms.langchain.LangchainLLM",
+        "mistral": "mem0.llms.mistral.MistralLLM",
     }
 
     @classmethod
@@ -56,6 +57,7 @@ class EmbedderFactory:
         "lmstudio": "mem0.embeddings.lmstudio.LMStudioEmbedding",
         "langchain": "mem0.embeddings.langchain.LangchainEmbedding",
         "aws_bedrock": "mem0.embeddings.aws_bedrock.AWSBedrockEmbedding",
+        "mistral": "mem0.embeddings.mistral.MistralEmbedding",
     }
 
     @classmethod

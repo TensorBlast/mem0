@@ -126,6 +126,23 @@ def _fix_ollama_urls(config_section):
     return config_section
 
 
+def _handle_mistral_config(config_section):
+    """
+    Handle Mistral-specific configuration.
+    Ensures proper API key handling for Mistral provider.
+    """
+    if not config_section or "config" not in config_section:
+        return config_section
+    
+    mistral_config = config_section["config"]
+    
+    # If no API key is provided, set default environment variable reference
+    if "api_key" not in mistral_config:
+        mistral_config["api_key"] = "env:MISTRAL_API_KEY"
+    
+    return config_section
+
+
 def reset_memory_client():
     """Reset the global memory client to force reinitialization with new config."""
     global _memory_client, _config_hash
@@ -234,6 +251,10 @@ def get_memory_client(custom_instructions: str = None):
                         # Fix Ollama URLs for Docker if needed
                         if config["llm"].get("provider") == "ollama":
                             config["llm"] = _fix_ollama_urls(config["llm"])
+                        
+                        # Handle Mistral configuration
+                        if config["llm"].get("provider") == "mistral":
+                            config["llm"] = _handle_mistral_config(config["llm"])
                     
                     # Update Embedder configuration if available
                     if "embedder" in mem0_config and mem0_config["embedder"] is not None:
@@ -242,6 +263,10 @@ def get_memory_client(custom_instructions: str = None):
                         # Fix Ollama URLs for Docker if needed
                         if config["embedder"].get("provider") == "ollama":
                             config["embedder"] = _fix_ollama_urls(config["embedder"])
+                        
+                        # Handle Mistral configuration
+                        if config["embedder"].get("provider") == "mistral":
+                            config["embedder"] = _handle_mistral_config(config["embedder"])
             else:
                 print("No configuration found in database, using defaults")
                     
