@@ -15,7 +15,7 @@ services:
       - USER=moot
       - QDRANT_HOST=mem0_store
       - QDRANT_PORT=6333
-      - PROVIDER=
+      - PROVIDER=mistral
       - AUTO_CONFIGURE=true
     depends_on:
       - mem0_store

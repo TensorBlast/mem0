@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.models import Base, Config as ConfigModel
 from app.database import DATABASE_URL
 import uuid
+from custom_detailed_prompts import get_comprehensive_fact_extraction_prompt
 
 
 def create_config_from_env():
@@ -26,7 +27,7 @@ def create_config_from_env():
 
 
 def create_mistral_config():
-    """Create Mistral configuration."""
+    """Create Mistral configuration with detailed memory extraction."""
     return {
         "mem0": {
             "llm": {
@@ -34,7 +35,7 @@ def create_mistral_config():
                 "config": {
                     "model": "mistral-small-latest",
                     "temperature": 0.1,
-                    "max_tokens": 2000,
+                    "max_tokens": 8000,
                     "api_key": "env:MISTRAL_API_KEY"
                 }
             },
@@ -53,13 +54,13 @@ def create_mistral_config():
                     "host": "mem0_store",
                     "port": 6333
                 }
-            }
+            },
         }
     }
 
 
 def create_openai_config():
-    """Create OpenAI configuration."""
+    """Create OpenAI configuration with detailed memory extraction."""
     return {
         "mem0": {
             "llm": {
@@ -86,7 +87,7 @@ def create_openai_config():
                     "host": "mem0_store",
                     "port": 6333
                 }
-            }
+            },
         }
     }
 
