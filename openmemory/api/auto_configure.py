@@ -44,10 +44,16 @@ def create_mistral_config():
                     "model": "mistral-embed",
                     "api_key": "env:MISTRAL_API_KEY"
                 }
+            },
+            "vector_store": {
+                "provider": "qdrant",
+                "config": {
+                    "embedding_model_dims": 1024,
+                    "collection_name": "openmemory",
+                    "host": "mem0_store",
+                    "port": 6333
+                }
             }
-        },
-        "openmemory": {
-            "custom_instructions": "You are a helpful AI assistant with access to memory. Use the memory to provide personalized and contextual responses."
         }
     }
 
@@ -71,10 +77,16 @@ def create_openai_config():
                     "model": "text-embedding-3-small",
                     "api_key": "env:OPENAI_API_KEY"
                 }
+            },
+            "vector_store": {
+                "provider": "qdrant",
+                "config": {
+                    "embedding_model_dims": 1536,
+                    "collection_name": "openmemory",
+                    "host": "mem0_store",
+                    "port": 6333
+                }
             }
-        },
-        "openmemory": {
-            "custom_instructions": "You are a helpful AI assistant with access to memory. Use the memory to provide personalized and contextual responses."
         }
     }
 

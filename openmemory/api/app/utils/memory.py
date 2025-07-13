@@ -159,6 +159,7 @@ def get_default_memory_config():
                 "collection_name": "openmemory",
                 "host": "mem0_store",
                 "port": 6333,
+                "embedding_model_dims": 1536,  # Default for OpenAI embeddings
             }
         },
         "llm": {
@@ -282,6 +283,35 @@ def get_memory_client(custom_instructions: str = None):
         if instructions_to_use:
             config["custom_fact_extraction_prompt"] = instructions_to_use
 
+        # Update vector store configuration based on embedder provider
+        embedder_provider = config.get("embedder", {}).get("provider", "openai")
+        if embedder_provider == "mistral":
+            # Set Mistral embedding dimensions
+            if "vector_store" not in config:
+                config["vector_store"] = {
+                    "provider": "qdrant",
+                    "config": {
+                        "collection_name": "openmemory",
+                        "host": "mem0_store", 
+                        "port": 6333
+                    }
+                }
+            config["vector_store"]["config"]["embedding_model_dims"] = 1024
+            print("Set vector store embedding dimensions to 1024 for Mistral embedder")
+        elif embedder_provider == "openai":
+            # Set OpenAI embedding dimensions
+            if "vector_store" not in config:
+                config["vector_store"] = {
+                    "provider": "qdrant",
+                    "config": {
+                        "collection_name": "openmemory",
+                        "host": "mem0_store",
+                        "port": 6333
+                    }
+                }
+            config["vector_store"]["config"]["embedding_model_dims"] = 1536
+            print("Set vector store embedding dimensions to 1536 for OpenAI embedder")
+
         # ALWAYS parse environment variables in the final config
         # This ensures that even default config values like "env:OPENAI_API_KEY" get parsed
         print("Parsing environment variables in final config...")
@@ -297,6 +327,21 @@ def get_memory_client(custom_instructions: str = None):
                 _memory_client = Memory.from_config(config_dict=config)
                 _config_hash = current_config_hash
                 print("Memory client initialized successfully")
+                
+                # Check if we need to reset the vector store due to dimension mismatch
+                if _memory_client and hasattr(_memory_client, 'vector_store'):
+                    vector_store = _memory_client.vector_store
+                    expected_dims = config.get("vector_store", {}).get("config", {}).get("embedding_model_dims")
+                    
+                    if expected_dims and hasattr(vector_store, 'embedding_model_dims'):
+                        current_dims = vector_store.embedding_model_dims
+                        if current_dims != expected_dims:
+                            print(f"Dimension mismatch detected: current={current_dims}, expected={expected_dims}")
+                            if hasattr(vector_store, 'reset'):
+                                print("Resetting vector store to match new embedding dimensions...")
+                                vector_store.reset()
+                                print(f"Vector store reset complete with {expected_dims} dimensions")
+                
             except Exception as init_error:
                 print(f"Warning: Failed to initialize memory client: {init_error}")
                 print("Server will continue running with limited memory functionality")

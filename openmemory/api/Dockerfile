@@ -6,6 +6,7 @@ WORKDIR /usr/src
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    curl \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*
@@ -15,6 +16,8 @@ COPY pyproject.toml .
 COPY README.md .
 COPY mem0/ ./mem0/
 RUN pip install -e ".[llms]"
+
+# Mistral compatibility is now built-in
 
 # Create openmemory directory and copy API code
 WORKDIR /usr/src/openmemory
