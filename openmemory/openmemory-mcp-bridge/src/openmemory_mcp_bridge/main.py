@@ -59,16 +59,53 @@ class OpenMemoryMCPBridge:
             },
             {
                 "name": "get_memories",
-                "description": "Get memories for a user based on a query. This method is called everytime before answering user queries to understand user's preferences and history.",
+                "description": "Get memories for a user with full filtering and pagination support. This method is called everytime before answering user queries to understand user's preferences and history.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "query": {
+                        "app_id": {
                             "type": "string",
-                            "description": "Query to search for memories"
+                            "description": "Filter by specific app ID (UUID format)"
+                        },
+                        "from_date": {
+                            "type": "integer",
+                            "description": "Filter memories created after this date (timestamp)"
+                        },
+                        "to_date": {
+                            "type": "integer", 
+                            "description": "Filter memories created before this date (timestamp)"
+                        },
+                        "categories": {
+                            "type": "string",
+                            "description": "Filter by categories (comma-separated)"
+                        },
+                        "search_query": {
+                            "type": "string",
+                            "description": "Search query to filter memories"
+                        },
+                        "sort_column": {
+                            "type": "string",
+                            "description": "Column to sort by (memory, categories, app_name, created_at)",
+                            "enum": ["memory", "categories", "app_name", "created_at"]
+                        },
+                        "sort_direction": {
+                            "type": "string",
+                            "description": "Sort direction",
+                            "enum": ["asc", "desc"]
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "Page number (default: 1)",
+                            "minimum": 1
+                        },
+                        "size": {
+                            "type": "integer",
+                            "description": "Page size (default: 50, max: 100)",
+                            "minimum": 1,
+                            "maximum": 100
                         }
                     },
-                    "required": ["query"]
+                    "required": []
                 }
             },
             {
@@ -89,15 +126,6 @@ class OpenMemoryMCPBridge:
             {
                 "name": "delete_all_memories",
                 "description": "Delete all memories for a user.",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            },
-            {
-                "name": "get_memory_history",
-                "description": "Get the history of memory operations for a user.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {},
@@ -161,6 +189,124 @@ class OpenMemoryMCPBridge:
                 }
             },
             {
+                "name": "pause_memories",
+                "description": "Pause memories based on various criteria (IDs, categories, app, or global).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "memory_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of memory IDs to pause"
+                        },
+                        "category_ids": {
+                            "type": "array",
+                            "items": {"type": "string"}, 
+                            "description": "List of category IDs to pause"
+                        },
+                        "app_id": {
+                            "type": "string",
+                            "description": "App ID to pause memories for"
+                        },
+                        "all_for_app": {
+                            "type": "boolean",
+                            "description": "Pause all memories for the specified app"
+                        },
+                        "global_pause": {
+                            "type": "boolean",
+                            "description": "Pause all memories globally"
+                        },
+                        "state": {
+                            "type": "string",
+                            "description": "New state to set",
+                            "enum": ["active", "paused", "archived", "deleted"]
+                        }
+                    },
+                    "required": []
+                }
+            },
+            {
+                "name": "get_memory_access_log", 
+                "description": "Get the access log for a specific memory.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "memory_id": {
+                            "type": "string",
+                            "description": "The ID of the memory to get access log for"
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "Page number (default: 1)",
+                            "minimum": 1
+                        },
+                        "page_size": {
+                            "type": "integer",
+                            "description": "Page size (default: 10, max: 100)",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    "required": ["memory_id"]
+                }
+            },
+            {
+                "name": "filter_memories",
+                "description": "Advanced filtering of memories with complex criteria.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "search_query": {
+                            "type": "string",
+                            "description": "Search query text"
+                        },
+                        "app_ids": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Filter by app IDs"
+                        },
+                        "category_ids": {
+                            "type": "array", 
+                            "items": {"type": "string"},
+                            "description": "Filter by category IDs"
+                        },
+                        "sort_column": {
+                            "type": "string",
+                            "description": "Column to sort by"
+                        },
+                        "sort_direction": {
+                            "type": "string",
+                            "description": "Sort direction",
+                            "enum": ["asc", "desc"]
+                        },
+                        "from_date": {
+                            "type": "integer",
+                            "description": "Filter memories created after this timestamp"
+                        },
+                        "to_date": {
+                            "type": "integer",
+                            "description": "Filter memories created before this timestamp"
+                        },
+                        "show_archived": {
+                            "type": "boolean",
+                            "description": "Include archived memories (default: false)"
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "Page number (default: 1)",
+                            "minimum": 1
+                        },
+                        "size": {
+                            "type": "integer",
+                            "description": "Page size (default: 50, max: 100)", 
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    "required": []
+                }
+            },
+            {
                 "name": "get_related_memories",
                 "description": "Get memories related to a specific memory.",
                 "inputSchema": {
@@ -170,11 +316,16 @@ class OpenMemoryMCPBridge:
                             "type": "string",
                             "description": "The ID of the memory to find related memories for"
                         },
-                        "limit": {
+                        "page": {
                             "type": "integer",
-                            "description": "Maximum number of related memories to return (default: 10)",
+                            "description": "Page number (default: 1)",
+                            "minimum": 1
+                        },
+                        "size": {
+                            "type": "integer",
+                            "description": "Page size (default: 50, max: 100)",
                             "minimum": 1,
-                            "maximum": 50
+                            "maximum": 100
                         }
                     },
                     "required": ["memory_id"]
@@ -191,63 +342,261 @@ class OpenMemoryMCPBridge:
             },
             {
                 "name": "list_apps",
-                "description": "List all apps associated with the user.",
+                "description": "List all apps associated with the user with full filtering and pagination.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Filter by app name"
+                        },
                         "is_active": {
                             "type": "boolean",
-                            "description": "Filter by active status (optional)"
+                            "description": "Filter by active status"
+                        },
+                        "sort_by": {
+                            "type": "string",
+                            "description": "Sort by field (default: name)"
+                        },
+                        "sort_direction": {
+                            "type": "string",
+                            "description": "Sort direction (default: asc)",
+                            "enum": ["asc", "desc"]
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "Page number (default: 1)",
+                            "minimum": 1
+                        },
+                        "page_size": {
+                            "type": "integer",
+                            "description": "Page size (default: 10, max: 100)",
+                            "minimum": 1,
+                            "maximum": 100
                         }
                     },
                     "required": []
                 }
             },
             {
-                "name": "search_memories",
-                "description": "Advanced search for memories with filtering options.",
+                "name": "get_app_details",
+                "description": "Get detailed information about a specific app.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "query": {
+                        "app_id": {
                             "type": "string",
-                            "description": "Search query text"
-                        },
-                        "categories": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "Filter by categories"
-                        },
-                        "from_date": {
-                            "type": "integer",
-                            "description": "Filter memories created after this timestamp"
-                        },
-                        "to_date": {
-                            "type": "integer",
-                            "description": "Filter memories created before this timestamp"
-                        },
-                        "sort_by": {
-                            "type": "string",
-                            "description": "Sort by field (created_at, content, etc.)",
-                            "enum": ["created_at", "content"]
-                        },
-                        "sort_direction": {
-                            "type": "string",
-                            "description": "Sort direction",
-                            "enum": ["asc", "desc"]
-                        },
-                        "limit": {
-                            "type": "integer",
-                            "description": "Maximum number of results to return (default: 20)",
-                            "minimum": 1,
-                            "maximum": 100
-                        },
-                        "show_archived": {
-                            "type": "boolean",
-                            "description": "Include archived memories in results (default: false)"
+                            "description": "The ID of the app to get details for"
                         }
                     },
+                    "required": ["app_id"]
+                }
+            },
+            {
+                "name": "update_app_details",
+                "description": "Update app details (activate/deactivate).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "app_id": {
+                            "type": "string",
+                            "description": "The ID of the app to update"
+                        },
+                        "is_active": {
+                            "type": "boolean",
+                            "description": "Set the active status of the app"
+                        }
+                    },
+                    "required": ["app_id", "is_active"]
+                }
+            },
+            {
+                "name": "list_app_memories",
+                "description": "List all memories for a specific app.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "app_id": {
+                            "type": "string",
+                            "description": "The ID of the app to list memories for"
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "Page number (default: 1)",
+                            "minimum": 1
+                        },
+                        "page_size": {
+                            "type": "integer",
+                            "description": "Page size (default: 10, max: 100)",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    "required": ["app_id"]
+                }
+            },
+            {
+                "name": "list_app_accessed_memories",
+                "description": "List memories that have been accessed by a specific app.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "app_id": {
+                            "type": "string",
+                            "description": "The ID of the app to list accessed memories for"
+                        },
+                        "page": {
+                            "type": "integer",
+                            "description": "Page number (default: 1)",
+                            "minimum": 1
+                        },
+                        "page_size": {
+                            "type": "integer",
+                            "description": "Page size (default: 10, max: 100)",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    },
+                    "required": ["app_id"]
+                }
+            },
+            {
+                "name": "get_configuration",
+                "description": "Get the current OpenMemory configuration.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
                     "required": []
+                }
+            },
+            {
+                "name": "update_configuration",
+                "description": "Update the OpenMemory configuration.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "config": {
+                            "type": "object",
+                            "description": "Configuration object to update",
+                            "properties": {
+                                "mem0": {
+                                    "type": "object",
+                                    "description": "Mem0 configuration"
+                                },
+                                "openmemory": {
+                                    "type": "object", 
+                                    "description": "OpenMemory specific configuration"
+                                }
+                            }
+                        }
+                    },
+                    "required": ["config"]
+                }
+            },
+            {
+                "name": "reset_configuration",
+                "description": "Reset the configuration to default values.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            },
+            {
+                "name": "get_llm_configuration",
+                "description": "Get only the LLM configuration.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            },
+            {
+                "name": "update_llm_configuration",
+                "description": "Update only the LLM configuration.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "llm_config": {
+                            "type": "object",
+                            "description": "LLM configuration object",
+                            "properties": {
+                                "provider": {
+                                    "type": "string",
+                                    "description": "LLM provider name"
+                                },
+                                "config": {
+                                    "type": "object",
+                                    "description": "Provider-specific configuration"
+                                }
+                            },
+                            "required": ["provider", "config"]
+                        }
+                    },
+                    "required": ["llm_config"]
+                }
+            },
+            {
+                "name": "get_embedder_configuration", 
+                "description": "Get only the Embedder configuration.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            },
+            {
+                "name": "update_embedder_configuration",
+                "description": "Update only the Embedder configuration.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "embedder_config": {
+                            "type": "object",
+                            "description": "Embedder configuration object",
+                            "properties": {
+                                "provider": {
+                                    "type": "string",
+                                    "description": "Embedder provider name"
+                                },
+                                "config": {
+                                    "type": "object",
+                                    "description": "Provider-specific configuration"
+                                }
+                            },
+                            "required": ["provider", "config"]
+                        }
+                    },
+                    "required": ["embedder_config"]
+                }
+            },
+            {
+                "name": "get_openmemory_configuration",
+                "description": "Get only the OpenMemory configuration.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            },
+            {
+                "name": "update_openmemory_configuration",
+                "description": "Update only the OpenMemory configuration.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "openmemory_config": {
+                            "type": "object",
+                            "description": "OpenMemory configuration object",
+                            "properties": {
+                                "custom_instructions": {
+                                    "type": "string",
+                                    "description": "Custom instructions for memory management"
+                                }
+                            }
+                        }
+                    },
+                    "required": ["openmemory_config"]
                 }
             }
         ]
@@ -318,8 +667,6 @@ class OpenMemoryMCPBridge:
                 result = await self._delete_memories(arguments)
             elif tool_name == "delete_all_memories":
                 result = await self._delete_all_memories(arguments)
-            elif tool_name == "get_memory_history":
-                result = await self._get_memory_history(arguments)
             elif tool_name == "get_memory_by_id":
                 result = await self._get_memory_by_id(arguments)
             elif tool_name == "update_memory":
@@ -328,14 +675,44 @@ class OpenMemoryMCPBridge:
                 result = await self._get_categories(arguments)
             elif tool_name == "archive_memories":
                 result = await self._archive_memories(arguments)
+            elif tool_name == "pause_memories":
+                result = await self._pause_memories(arguments)
+            elif tool_name == "get_memory_access_log":
+                result = await self._get_memory_access_log(arguments)
+            elif tool_name == "filter_memories":
+                result = await self._filter_memories(arguments)
             elif tool_name == "get_related_memories":
                 result = await self._get_related_memories(arguments)
             elif tool_name == "get_user_stats":
                 result = await self._get_user_stats(arguments)
             elif tool_name == "list_apps":
                 result = await self._list_apps(arguments)
-            elif tool_name == "search_memories":
-                result = await self._search_memories(arguments)
+            elif tool_name == "get_app_details":
+                result = await self._get_app_details(arguments)
+            elif tool_name == "update_app_details":
+                result = await self._update_app_details(arguments)
+            elif tool_name == "list_app_memories":
+                result = await self._list_app_memories(arguments)
+            elif tool_name == "list_app_accessed_memories":
+                result = await self._list_app_accessed_memories(arguments)
+            elif tool_name == "get_configuration":
+                result = await self._get_configuration(arguments)
+            elif tool_name == "update_configuration":
+                result = await self._update_configuration(arguments)
+            elif tool_name == "reset_configuration":
+                result = await self._reset_configuration(arguments)
+            elif tool_name == "get_llm_configuration":
+                result = await self._get_llm_configuration(arguments)
+            elif tool_name == "update_llm_configuration":
+                result = await self._update_llm_configuration(arguments)
+            elif tool_name == "get_embedder_configuration":
+                result = await self._get_embedder_configuration(arguments)
+            elif tool_name == "update_embedder_configuration":
+                result = await self._update_embedder_configuration(arguments)
+            elif tool_name == "get_openmemory_configuration":
+                result = await self._get_openmemory_configuration(arguments)
+            elif tool_name == "update_openmemory_configuration":
+                result = await self._update_openmemory_configuration(arguments)
             else:
                 raise ValueError(f"Unknown tool: {tool_name}")
             
@@ -385,21 +762,38 @@ class OpenMemoryMCPBridge:
 
     async def _get_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Get memories from OpenMemory"""
-        query = arguments.get("query", "")
-        
-        # Use the filter endpoint for search queries
-        payload = {
+        app_id = arguments.get("app_id")
+        from_date = arguments.get("from_date")
+        to_date = arguments.get("to_date")
+        categories = arguments.get("categories")
+        search_query = arguments.get("search_query")
+        sort_column = arguments.get("sort_column", "created_at")
+        sort_direction = arguments.get("sort_direction", "desc")
+        page = arguments.get("page", 1)
+        size = arguments.get("size", 50)
+
+        params = {
             "user_id": self.user_id,
-            "page": 1,
-            "size": 50,
-            "search_query": query if query else None,
-            "show_archived": False
+            "page": page,
+            "size": size,
+            "sort_column": sort_column,
+            "sort_direction": sort_direction
         }
-        
-        response = await self.http_client.post(
-            f"{self.base_url}/api/v1/memories/filter",
-            json=payload,
-            headers={"Content-Type": "application/json"}
+
+        if app_id:
+            params["app_id"] = app_id
+        if from_date:
+            params["from_date"] = from_date
+        if to_date:
+            params["to_date"] = to_date
+        if categories:
+            params["categories"] = categories
+        if search_query:
+            params["search_query"] = search_query
+
+        response = await self.http_client.get(
+            f"{self.base_url}/api/v1/memories/",
+            params=params
         )
         response.raise_for_status()
         return response.json()
@@ -424,7 +818,7 @@ class OpenMemoryMCPBridge:
     async def _delete_all_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Delete all memories for a user"""
         # First, get all memories
-        memories_response = await self._get_memories({"query": ""})
+        memories_response = await self._get_memories({"app_id": "", "page": 1, "size": 50}) # Get all memories for the user
         
         if "items" in memories_response:
             memory_ids = [memory["id"] for memory in memories_response["items"]]
@@ -436,33 +830,6 @@ class OpenMemoryMCPBridge:
                 return {"message": "No memories found to delete", "count": 0}
         else:
             return {"message": "No memories found to delete", "count": 0}
-
-    async def _get_memory_history(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Get memory history for a user"""
-        # Get all memories sorted by creation date (acts as history)
-        payload = {
-            "user_id": self.user_id,
-            "page": 1,
-            "size": 50,
-            "sort_column": "created_at",
-            "sort_direction": "desc",
-            "show_archived": True  # Include archived memories in history
-        }
-        
-        response = await self.http_client.post(
-            f"{self.base_url}/api/v1/memories/filter",
-            json=payload,
-            headers={"Content-Type": "application/json"}
-        )
-        response.raise_for_status()
-        result = response.json()
-        
-        # Format as history
-        return {
-            "history": result.get("items", []),
-            "total": result.get("total", 0),
-            "message": "Memory history (sorted by creation date)"
-        }
 
     async def _get_memory_by_id(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Get a specific memory by ID"""
@@ -508,16 +875,110 @@ class OpenMemoryMCPBridge:
         """Archive memories"""
         memory_ids = arguments.get("memory_ids", [])
         
-        # Convert string IDs to UUIDs for the API
-        uuid_ids = [memory_id for memory_id in memory_ids]
-        
-        payload = {
-            "memory_ids": uuid_ids,
+        params = {
             "user_id": self.user_id
         }
         
+        # The API expects an array of memory IDs in the body
+        payload = memory_ids
+        
         response = await self.http_client.post(
             f"{self.base_url}/api/v1/memories/actions/archive",
+            params=params,
+            json=payload,
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _pause_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Pause memories based on various criteria"""
+        memory_ids = arguments.get("memory_ids", [])
+        category_ids = arguments.get("category_ids", [])
+        app_id = arguments.get("app_id")
+        all_for_app = arguments.get("all_for_app", False)
+        global_pause = arguments.get("global_pause", False)
+        state = arguments.get("state", "paused") # Default to "paused"
+
+        payload = {
+            "memory_ids": memory_ids,
+            "category_ids": category_ids,
+            "app_id": app_id,
+            "all_for_app": all_for_app,
+            "global_pause": global_pause,
+            "state": state,
+            "user_id": self.user_id
+        }
+
+        response = await self.http_client.post(
+            f"{self.base_url}/api/v1/memories/actions/pause",
+            json=payload,
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _get_memory_access_log(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Get memory access log for a specific memory"""
+        memory_id = arguments.get("memory_id")
+        page = arguments.get("page", 1)
+        page_size = arguments.get("page_size", 10)
+
+        params = {
+            "page": page,
+            "page_size": page_size
+        }
+
+        response = await self.http_client.get(
+            f"{self.base_url}/api/v1/memories/{memory_id}/access-log",
+            params=params
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _filter_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Advanced filtering of memories"""
+        search_query = arguments.get("search_query")
+        app_ids = arguments.get("app_ids", [])
+        category_ids = arguments.get("category_ids", [])
+        sort_column = arguments.get("sort_column")
+        sort_direction = arguments.get("sort_direction", "desc")
+        from_date = arguments.get("from_date")
+        to_date = arguments.get("to_date")
+        show_archived = arguments.get("show_archived", False)
+        page = arguments.get("page", 1)
+        size = arguments.get("size", 50)
+
+        params = {
+            "page": page,
+            "size": size
+        }
+
+        payload = {
+            "user_id": self.user_id,
+            "page": page,
+            "size": size,
+            "show_archived": show_archived
+        }
+
+        if search_query:
+            payload["search_query"] = search_query
+        if app_ids:
+            payload["app_ids"] = app_ids
+        if category_ids:
+            payload["category_ids"] = category_ids
+        if sort_column:
+            payload["sort_column"] = sort_column
+        if sort_direction:
+            payload["sort_direction"] = sort_direction
+        if from_date:
+            payload["from_date"] = from_date
+        if to_date:
+            payload["to_date"] = to_date
+
+        response = await self.http_client.post(
+            f"{self.base_url}/api/v1/memories/filter",
+            params=params,
             json=payload,
             headers={"Content-Type": "application/json"}
         )
@@ -527,11 +988,13 @@ class OpenMemoryMCPBridge:
     async def _get_related_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Get related memories for a specific memory"""
         memory_id = arguments.get("memory_id")
-        limit = arguments.get("limit", 10)
+        page = arguments.get("page", 1)
+        size = arguments.get("size", 50)
         
         params = {
             "user_id": self.user_id,
-            "size": limit
+            "page": page,
+            "size": size
         }
         
         response = await self.http_client.get(
@@ -554,12 +1017,25 @@ class OpenMemoryMCPBridge:
 
     async def _list_apps(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """List all apps for the user"""
-        params = {}
-        
+        name = arguments.get("name")
         is_active = arguments.get("is_active")
+        sort_by = arguments.get("sort_by", "name")
+        sort_direction = arguments.get("sort_direction", "asc")
+        page = arguments.get("page", 1)
+        page_size = arguments.get("page_size", 10)
+
+        params = {
+            "page": page,
+            "page_size": page_size,
+            "sort_by": sort_by,
+            "sort_direction": sort_direction
+        }
+
+        if name:
+            params["name"] = name
         if is_active is not None:
             params["is_active"] = is_active
-        
+
         response = await self.http_client.get(
             f"{self.base_url}/api/v1/apps/",
             params=params
@@ -567,40 +1043,158 @@ class OpenMemoryMCPBridge:
         response.raise_for_status()
         return response.json()
 
-    async def _search_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Advanced search for memories with filtering"""
-        query = arguments.get("query", "")
-        categories = arguments.get("categories", [])
-        from_date = arguments.get("from_date")
-        to_date = arguments.get("to_date")
-        sort_by = arguments.get("sort_by", "created_at")
-        sort_direction = arguments.get("sort_direction", "desc")
-        limit = arguments.get("limit", 20)
-        show_archived = arguments.get("show_archived", False)
-        
-        payload = {
-            "user_id": self.user_id,
-            "page": 1,
-            "size": limit,
-            "search_query": query if query else None,
-            "sort_column": sort_by,
-            "sort_direction": sort_direction,
-            "show_archived": show_archived
+    async def _get_app_details(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Get detailed information about a specific app"""
+        app_id = arguments.get("app_id")
+
+        response = await self.http_client.get(
+            f"{self.base_url}/api/v1/apps/{app_id}",
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _update_app_details(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Update app details (activate/deactivate)"""
+        app_id = arguments.get("app_id")
+        is_active = arguments.get("is_active")
+
+        params = {
+            "is_active": is_active
         }
-        
-        if categories:
-            # Note: The API might expect category_ids, but we'll try with category names first
-            payload["categories"] = ",".join(categories)
-        
-        if from_date:
-            payload["from_date"] = from_date
-        
-        if to_date:
-            payload["to_date"] = to_date
-        
+
+        response = await self.http_client.put(
+            f"{self.base_url}/api/v1/apps/{app_id}",
+            params=params,
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _list_app_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """List all memories for a specific app"""
+        app_id = arguments.get("app_id")
+        page = arguments.get("page", 1)
+        page_size = arguments.get("page_size", 10)
+
+        params = {
+            "page": page,
+            "page_size": page_size
+        }
+
+        response = await self.http_client.get(
+            f"{self.base_url}/api/v1/apps/{app_id}/memories",
+            params=params
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _list_app_accessed_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """List memories that have been accessed by a specific app"""
+        app_id = arguments.get("app_id")
+        page = arguments.get("page", 1)
+        page_size = arguments.get("page_size", 10)
+
+        params = {
+            "page": page,
+            "page_size": page_size
+        }
+
+        response = await self.http_client.get(
+            f"{self.base_url}/api/v1/apps/{app_id}/accessed",
+            params=params
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _get_configuration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Get the current OpenMemory configuration"""
+        response = await self.http_client.get(
+            f"{self.base_url}/api/v1/config/",
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _update_configuration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Update the OpenMemory configuration"""
+        config = arguments.get("config")
+
+        response = await self.http_client.put(
+            f"{self.base_url}/api/v1/config/",
+            json=config,
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _reset_configuration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Reset the configuration to default values"""
         response = await self.http_client.post(
-            f"{self.base_url}/api/v1/memories/filter",
-            json=payload,
+            f"{self.base_url}/api/v1/config/reset",
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _get_llm_configuration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Get only the LLM configuration"""
+        response = await self.http_client.get(
+            f"{self.base_url}/api/v1/config/mem0/llm",
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _update_llm_configuration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Update only the LLM configuration"""
+        llm_config = arguments.get("llm_config")
+
+        response = await self.http_client.put(
+            f"{self.base_url}/api/v1/config/mem0/llm",
+            json=llm_config,
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _get_embedder_configuration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Get only the Embedder configuration"""
+        response = await self.http_client.get(
+            f"{self.base_url}/api/v1/config/mem0/embedder",
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _update_embedder_configuration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Update only the Embedder configuration"""
+        embedder_config = arguments.get("embedder_config")
+
+        response = await self.http_client.put(
+            f"{self.base_url}/api/v1/config/mem0/embedder",
+            json=embedder_config,
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _get_openmemory_configuration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Get only the OpenMemory configuration"""
+        response = await self.http_client.get(
+            f"{self.base_url}/api/v1/config/openmemory",
+            headers={"Content-Type": "application/json"}
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def _update_openmemory_configuration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Update only the OpenMemory configuration"""
+        openmemory_config = arguments.get("openmemory_config")
+
+        response = await self.http_client.put(
+            f"{self.base_url}/api/v1/config/openmemory",
+            json=openmemory_config,
             headers={"Content-Type": "application/json"}
         )
         response.raise_for_status()
