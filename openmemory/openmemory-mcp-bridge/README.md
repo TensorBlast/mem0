@@ -15,7 +15,7 @@ A Model Context Protocol (MCP) bridge for OpenMemory SSE endpoints that provides
 No installation required! Use `uvx` to run directly:
 
 ```bash
-uvx openmemory-mcp-bridge --sse http://localhost:8765/mcp/claude/sse/moot
+uvx openmemory-mcp-bridge --sse http://localhost:8765/mcp/{client}/sse/{userid}
 ```
 
 ## Usage
@@ -29,7 +29,7 @@ openmemory-mcp-bridge --sse http://localhost:8765/mcp/claude/sse/moot
 ### Using Explicit Parameters
 
 ```bash
-openmemory-mcp-bridge --base-url http://localhost:8765 --client claude --user-id moot
+openmemory-mcp-bridge --base-url http://localhost:8765 --client claude --user-id userid
 ```
 
 ### Command Line Options

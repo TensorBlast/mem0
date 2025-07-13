@@ -4,8 +4,15 @@ import asyncio
 import sys
 import re
 from urllib.parse import urlparse
+import importlib.metadata
 import click
 from .main import OpenMemoryMCPBridge
+
+def get_version():
+    try:
+        return importlib.metadata.version("openmemory-mcp-bridge")
+    except importlib.metadata.PackageNotFoundError:
+        return "0.0.0"
 
 @click.command()
 @click.option('--sse', 'sse_url', 
@@ -20,7 +27,7 @@ from .main import OpenMemoryMCPBridge
               help='Base URL for OpenMemory API (e.g., http://localhost:8765)')
 @click.option('--verbose', '-v', is_flag=True, 
               help='Enable verbose logging')
-@click.version_option(version='0.1.0')
+@click.version_option(version=get_version())
 def main(sse_url, url, client, user_id, base_url, verbose):
     """
     OpenMemory MCP Bridge - A bridge between MCP clients and OpenMemory SSE endpoints.
