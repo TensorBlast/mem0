@@ -1200,13 +1200,24 @@ class OpenMemoryMCPBridge:
         response.raise_for_status()
         return response.json()
 
-    async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_request(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Handle incoming MCP request"""
         method = request.get("method")
         params = request.get("params", {})
+        request_id = request.get("id")
         
         logger.info(f"Handling request: {method}")
         
+        # Handle notifications (no id field) - these don't need responses
+        if request_id is None:
+            if method == "notifications/initialized":
+                logger.info("Client initialized notification received")
+                return None
+            else:
+                logger.info(f"Unknown notification: {method}")
+                return None
+        
+        # Handle regular requests (with id field) - these need responses
         if method == "initialize":
             result = await self.handle_initialize(params)
         elif method == "tools/list":
@@ -1222,7 +1233,7 @@ class OpenMemoryMCPBridge:
         
         return {
             "jsonrpc": "2.0",
-            "id": request.get("id"),
+            "id": request_id,
             "result": result
         }
 
@@ -1241,9 +1252,10 @@ class OpenMemoryMCPBridge:
                     request = json.loads(line.strip())
                     response = await self.handle_request(request)
                     
-                    # Write JSON-RPC response to stdout
-                    print(json.dumps(response))
-                    sys.stdout.flush()
+                    # Only send response if one was generated (not for notifications)
+                    if response is not None:
+                        print(json.dumps(response))
+                        sys.stdout.flush()
                     
                 except json.JSONDecodeError as e:
                     logger.error(f"Invalid JSON: {e}")
@@ -1261,17 +1273,20 @@ class OpenMemoryMCPBridge:
                     
                 except Exception as e:
                     logger.error(f"Error handling request: {e}")
-                    error_response = {
-                        "jsonrpc": "2.0",
-                        "id": request.get("id") if 'request' in locals() else None,
-                        "error": {
-                            "code": -32603,
-                            "message": "Internal error",
-                            "data": str(e)
+                    
+                    # Only send error response for requests (with id), not for notifications
+                    if 'request' in locals() and request.get("id") is not None:
+                        error_response = {
+                            "jsonrpc": "2.0",
+                            "id": request.get("id"),
+                            "error": {
+                                "code": -32603,
+                                "message": "Internal error",
+                                "data": str(e)
+                            }
                         }
-                    }
-                    print(json.dumps(error_response))
-                    sys.stdout.flush()
+                        print(json.dumps(error_response))
+                        sys.stdout.flush()
         
         except KeyboardInterrupt:
             logger.info("Shutting down OpenMemory MCP Bridge")
