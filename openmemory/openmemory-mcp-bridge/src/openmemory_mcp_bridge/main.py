@@ -52,9 +52,14 @@ class OpenMemoryMCPBridge:
                             "type": "array",
                             "items": {"type": "string"},
                             "description": "List of memories to add"
+                        },
+                        "memory": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of memories to add (alternative parameter name)"
                         }
                     },
-                    "required": ["memories"]
+                    "required": []
                 }
             },
             {
@@ -738,11 +743,14 @@ class OpenMemoryMCPBridge:
 
     async def _add_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Add memories to OpenMemory"""
-        memories = arguments.get("memories", [])
+        # Handle both "memories" (plural) and "memory" (singular) for compatibility
+        memories = arguments.get("memories", arguments.get("memory", []))
         
         # OpenMemory API expects individual memory creation calls
         results = []
-        for memory_text in memories:
+        logger.info(f"Adding {len(memories)} memories for user {self.user_id} via app {self.client}")
+        
+        for i, memory_text in enumerate(memories):
             payload = {
                 "user_id": self.user_id,
                 "text": memory_text,
@@ -750,14 +758,26 @@ class OpenMemoryMCPBridge:
                 "app": self.client
             }
             
-            response = await self.http_client.post(
-                f"{self.base_url}/api/v1/memories/",
-                json=payload,
-                headers={"Content-Type": "application/json"}
-            )
-            response.raise_for_status()
-            results.append(response.json())
+            logger.info(f"Memory {i+1}/{len(memories)}: {memory_text[:100]}...")
+            logger.info(f"Payload: {payload}")
+            
+            try:
+                response = await self.http_client.post(
+                    f"{self.base_url}/api/v1/memories/",
+                    json=payload,
+                    headers={"Content-Type": "application/json"}
+                )
+                logger.info(f"API Response Status: {response.status_code}")
+                logger.info(f"API Response Text: {response.text}")
+                response.raise_for_status()
+                result = response.json()
+                results.append(result)
+                logger.info(f"Memory {i+1} added successfully: {result}")
+            except Exception as e:
+                logger.error(f"Failed to add memory {i+1}: {e}")
+                results.append({"error": str(e), "memory_text": memory_text})
         
+        logger.info(f"Final results: {results}")
         return {"results": results, "count": len(results)}
 
     async def _get_memories(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
